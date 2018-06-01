@@ -1,0 +1,90 @@
+{
+  "AWSEBDockerrunVersion": 2,
+  "volumes": [
+    {
+      "name": "application",
+      "host": {
+        "sourcePath": "/var/app/current/"
+      }
+    },
+    {
+      "name": "nginx-proxy-conf",
+      "host": {
+        "sourcePath": "/var/app/current/aws_config/nginx"
+      }
+    },
+    {
+      "name": "nginx-logs",
+      "host": {
+        "sourcePath": "/var/log/nginx"
+      }
+    },
+    {
+      "name": "php-conf",
+      "host": {
+        "sourcePath": "/var/app/current/aws_config/php/"
+      }
+    },
+    {
+      "name": "php-logs",
+      "host": {
+        "sourcePath": "/var/log/php"
+      }
+    }
+  ],
+  "containerDefinitions": [
+    {
+      "name": "php-app",
+      "image": "php:fpm",
+      "essential": true,
+      "memoryReservation": 512,
+      "mountPoints": [
+        {
+          "sourceVolume": "application",
+          "containerPath": "/var/www/html",
+          "readOnly": false
+        },
+        {
+          "sourceVolume": "awseb-logs-php-app",
+          "containerPath": "/var/log/sample-app"
+        },
+        {
+          "sourceVolume" : "php-conf",
+          "containerPath": "/usr/local/etc",
+          "readOnly": true
+        }
+      ]
+    },
+    {
+      "name": "nginx-proxy",
+      "image": "nginx",
+      "essential": true,
+      "memory": 128,
+      "portMappings": [
+        {
+          "hostPort": 80,
+          "containerPort": 80
+        }
+      ],
+      "links": [
+        "php-app"
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "application",
+          "containerPath": "/var/www/html",
+          "readOnly": false
+        },
+        {
+          "sourceVolume": "nginx-logs",
+          "containerPath": "/usr/local/openresty/nginx/logs"
+        },
+        {
+          "sourceVolume": "nginx-proxy-conf",
+          "containerPath": "/usr/local/openresty/nginx/conf",
+          "readOnly": true
+        }
+      ]
+    }
+  ]
+}
